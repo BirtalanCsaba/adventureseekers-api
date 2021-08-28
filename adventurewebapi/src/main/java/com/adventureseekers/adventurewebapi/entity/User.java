@@ -3,7 +3,6 @@ package com.adventureseekers.adventurewebapi.entity;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
@@ -17,6 +16,11 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
@@ -33,21 +37,35 @@ public class User {
 	private UUID id;
 	
 	@Column(name = "username")
+	@NotNull(message = "is required")
+	@Size(min = 1, max = 50, message = "is required")
 	private String userName;
 	
 	@Column(name = "password")
+	@NotNull(message = "is required")
+	@Size(min = 5, message = "too short")
+	@Size(max = 60, message = "too long")
 	private String password;
 	
 	@Column(name = "email")
+	@NotNull(message = "is required")
+	@Email(message = "Email should be valid")
+	@Size(min = 1, max = 50, message = "is required")
 	private String email;
 	
 	@Column(name = "first_name")
+	@NotNull(message = "is required")
+	@Size(min = 1, max = 50, message = "is required")
 	private String firstName;
 	
 	@Column(name = "last_name")
+	@NotNull(message = "is required")
+	@Size(min = 1, max = 50, message = "is required")
 	private String lastName;
 	
 	@Column(name = "birth_date")
+	@Temporal(TemporalType.DATE)
+	@NotNull(message="must not be empty")
 	private Date birthDate;
 	
 	@Column(name = "enabled")
@@ -57,7 +75,13 @@ public class User {
 				cascade = CascadeType.ALL)
 	private List<ConfirmationToken> confirmationTokens;
 	
-	@ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToMany(fetch = FetchType.LAZY, 
+			cascade = {
+					CascadeType.DETACH,
+					CascadeType.MERGE,
+					CascadeType.PERSIST,
+					CascadeType.REFRESH
+			})
 	@JoinTable(name = "users_roles", 
 			joinColumns = @JoinColumn(name = "user_id"), 
 			inverseJoinColumns = @JoinColumn(name = "role_id"))

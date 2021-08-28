@@ -3,7 +3,11 @@ package com.adventureseekers.adventurewebapi.security;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -14,15 +18,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.adventureseekers.adventurewebapi.entity.Role;
 import com.adventureseekers.adventurewebapi.entity.User;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 import com.adventureseekers.adventurewebapi.config.SecurityConstants;
 
@@ -35,34 +40,57 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public AuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
-
+    
+    /**
+     * When a users attempts to login, the method gets the credentials 
+     * and submits them in form of a token to a authentication manager.
+     */
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest req,
 				HttpServletResponse res) throws AuthenticationException {
-		try {
-			User applicationUser = new ObjectMapper().readValue(req.getInputStream(), User.class);
-    	
-			return authenticationManager.authenticate(
-    			new UsernamePasswordAuthenticationToken(applicationUser.getUserName(),
-    					applicationUser.getPassword(), new ArrayList<>()));
-    	} catch (IOException e) {
-    		throw new RuntimeException(e);
-    	}
-}
-
+		String username = req.getParameter("username");
+		String password = req.getParameter("password");
+		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+		return this.authenticationManager.authenticate(authenticationToken);
+	}
+	
+	/**
+	 * When the user is eligible to be authorized, it receives back an access token and a refresh token.
+	 */
 	@Override
 	protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
                                         Authentication auth) throws IOException, ServletException {
 
-		Date exp = new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME);
-		Key key = this.getSigningKey();
-		Claims claims = Jwts.claims().setSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername());
-		String token = Jwts.builder().setClaims(claims).signWith(SignatureAlgorithm.HS512, key).setExpiration(exp).compact();
-		res.addHeader("token", token);
-	}
-	
-	private Key getSigningKey() {
-		byte[] keyBytes = SecurityConstants.KEY.getBytes(StandardCharsets.UTF_8);
-		return Keys.hmacShaKeyFor(keyBytes);
+		org.springframework.security.core.userdetails.User user = 
+				(org.springframework.security.core.userdetails.User) auth.getPrincipal();
+		Algorithm algorithm = Algorithm.HMAC512(SecurityConstants.KEY.getBytes());
+		String access_token = JWT.create()
+				.withSubject(user.getUsername())
+				.withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+				.withIssuer(req.getRequestURL().toString())
+				.withClaim("roles", 
+						user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+				.sign(algorithm);
+				
+		String refresh_token = JWT.create()
+				.withSubject(user.getUsername())
+				.withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
+				.withIssuer(req.getRequestURL().toString())
+				.sign(algorithm);
+		Map<String, String> tokens = new HashMap<>();
+		tokens.put("access_token", access_token);
+		tokens.put("refresh_token", refresh_token);
+		res.setContentType("application/json");
+		new ObjectMapper().writeValue(res.getOutputStream(), tokens);
 	}
 }
+
+
+
+
+
+
+
+
+
+

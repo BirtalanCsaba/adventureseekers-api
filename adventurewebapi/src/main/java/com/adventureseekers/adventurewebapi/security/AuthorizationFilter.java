@@ -2,61 +2,88 @@ package com.adventureseekers.adventurewebapi.security;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.adventureseekers.adventurewebapi.config.SecurityConstants;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import java.util.Arrays;
 
-public class AuthorizationFilter extends BasicAuthenticationFilter {
+public class AuthorizationFilter extends OncePerRequestFilter {
 	
-	public AuthorizationFilter(AuthenticationManager authManager) {
-        super(authManager);
-    }
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws IOException, ServletException {
-    	String header = request.getHeader(SecurityConstants.HEADER_NAME);
-
-        if (header == null) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        UsernamePasswordAuthenticationToken authentication = authenticate(request);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        chain.doFilter(request, response);
-    }
-
-    private UsernamePasswordAuthenticationToken authenticate(HttpServletRequest request) {
-        String token = request.getHeader(SecurityConstants.HEADER_NAME);
-        if (token != null) {
-            Claims user = Jwts.parser()
-                    .setSigningKey(Keys.hmacShaKeyFor(SecurityConstants.KEY.getBytes()))
-                    .parseClaimsJws(token)
-                    .getBody();
-
-            if (user != null) {
-                return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
-            }else{
-                return  null;
-            }
-
-        }
-        return null;
-    }
+	/**
+	 * For every request we check for the token validity. If the token is invalid, we reject the call
+	 */
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		if (request.getServletPath().equals("/login")) {
+			filterChain.doFilter(request, response);
+		} else {
+			String authorizationHeader = request.getHeader("Authorization");
+			if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+				try {
+					String token = authorizationHeader.substring("Bearer ".length());
+					Algorithm algorithm = Algorithm.HMAC512(SecurityConstants.KEY.getBytes());
+					JWTVerifier verifier = JWT.require(algorithm).build();
+					
+					// check the token validity 
+					DecodedJWT decodedJWT = verifier.verify(token);
+					
+					// create the token
+					String username = decodedJWT.getSubject();
+					String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
+					Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+					Arrays.stream(roles).forEach(role -> {
+						authorities.add(new SimpleGrantedAuthority(role));
+					});
+					UsernamePasswordAuthenticationToken authenticationToken = 
+							new UsernamePasswordAuthenticationToken(username, null, authorities);
+					SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+					
+					// continue the request
+					filterChain.doFilter(request, response);
+				} catch(Exception exception) {
+					// send an error message to the client
+					response.setHeader("error", exception.getMessage());
+					response.setStatus(403);
+					
+					Map<String, String> error = new HashMap<>();
+					error.put("error_message", exception.getMessage());
+					response.setContentType("application/json");
+					new ObjectMapper().writeValue(response.getOutputStream(), error);
+				}
+			} else {
+				filterChain.doFilter(request, response);
+			}
+		}
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+

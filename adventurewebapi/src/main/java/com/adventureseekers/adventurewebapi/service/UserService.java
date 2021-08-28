@@ -16,8 +16,9 @@ public interface UserService extends UserDetailsService {
 	Optional<User> findByUserName(String userName);
 	
 	/**
-	 * Saves the given user to the database
+	 * Saves the given user to the database.
 	 * @param adventureUser The user to be saved
+	 * @exception If the user already exists. Email and user name must be unique.
 	 */
 	void save(User newUser);
 }

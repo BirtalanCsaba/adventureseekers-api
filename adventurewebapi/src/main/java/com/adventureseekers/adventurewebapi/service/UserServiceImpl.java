@@ -19,7 +19,7 @@ import com.adventureseekers.adventurewebapi.dao.RoleDAO;
 import com.adventureseekers.adventurewebapi.dao.UserDAO;
 import com.adventureseekers.adventurewebapi.entity.Role;
 import com.adventureseekers.adventurewebapi.entity.User;
-import com.adventureseekers.adventurewebapi.user.CustomUserDetail;
+import com.adventureseekers.adventurewebapi.exception.UserAlreadyExistException;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -39,10 +39,18 @@ public class UserServiceImpl implements UserService {
 		// check the database if the user already exists
 		return this.userDAO.findByUsername(userName);
 	}
-
+	
 	@Override
 	@Transactional
 	public void save(User newUser) {
+		// check the uniqueness of the user 
+		if (this.userDAO.existsByUsername(newUser.getUserName())) {
+			throw new UserAlreadyExistException("A user already exists with username - " + newUser.getUserName());
+		}
+		if (this.userDAO.existsByEmail(newUser.getEmail())) {
+			throw new UserAlreadyExistException("A user already exists with email - " + newUser.getEmail());
+		}
+		
 		User user = new User();
 		
 		// assign user details to the user object
