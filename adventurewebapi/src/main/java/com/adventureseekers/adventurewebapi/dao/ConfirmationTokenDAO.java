@@ -17,4 +17,11 @@ public interface ConfirmationTokenDAO
 	 * @return The ConfirmationToken object
 	 */
 	Optional<ConfirmationToken> findByToken(String token);
+	
+	/**
+	 * Gets the confirmation token by the user id
+	 * @param userId The id of the user 
+	 * @return The ConfirmationToken object 
+	 */
+	Optional<ConfirmationToken> findByUserId(String userId);
 }

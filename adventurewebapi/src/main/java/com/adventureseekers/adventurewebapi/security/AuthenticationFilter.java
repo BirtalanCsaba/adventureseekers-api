@@ -48,10 +48,18 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest req,
 				HttpServletResponse res) throws AuthenticationException {
-		String username = req.getParameter("username");
-		String password = req.getParameter("password");
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-		return this.authenticationManager.authenticate(authenticationToken);
+		try {
+			User theUser = new ObjectMapper().readValue(req.getInputStream(), User.class);
+			String username = theUser.getUserName();
+			String password = theUser.getPassword();
+			UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+			return this.authenticationManager.authenticate(authenticationToken);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		//String username = req.getParameter("username");
+		//String password = req.getParameter("password");
+		
 	}
 	
 	/**

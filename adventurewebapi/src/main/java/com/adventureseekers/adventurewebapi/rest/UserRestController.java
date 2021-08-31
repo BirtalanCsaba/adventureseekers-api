@@ -1,6 +1,7 @@
 package com.adventureseekers.adventurewebapi.rest;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.mail.MessagingException;
@@ -10,6 +11,8 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,7 +53,7 @@ public class UserRestController {
 	 * @param user The user to be registered
 	 */
 	@PostMapping("/register")
-	private String register(@Valid @RequestBody User user) {
+	private StringResponse register(@Valid @RequestBody User user) {
 		// register the user
 		this.userService.save(user);
 		
@@ -71,28 +74,65 @@ public class UserRestController {
         
 		this.confirmationTokenService.saveConfirmationToken(confirmationToken);
 		
-		// send the confirmation token via email
-		try {
-			this.emailService.send(
-					theUser.getEmail(), 
-					this.createConfirmationEmail(theUser.getFirstName() + " " + theUser.getLastName(), token),
-					"Confirm your email");
-		} catch (MessagingException e) {
-			this.logger.error(e.toString());
-		}
+		this.sendVerificationEmail(theUser, token);
 		
-		return "Account created successfuly";
+		return new StringResponse("Account created successfuly");
 	}
 	
 	/**
 	 * User token confirmation for account activation
 	 */
 	@PostMapping("/confirmation/{token}")
-	public String confirmation(@PathVariable String token) {
+	public StringResponse confirmation(@PathVariable String token) {
 		// confirm the user`s token
 		this.confirmationTokenService.confirmUser(token);
+		return new StringResponse("Account confirmed");
+	}
+	
+	/**
+	 * Resends the email with the verification token
+	 * @return
+	 */
+	@PostMapping("/resend/{email}")
+	public StringResponse resend(@PathVariable String email) {
+		try {
+			this.confirmationTokenService.resetToken(email);
+			this.sendVerificationEmail(email);
+		} catch (Exception e) {
+			this.logger.error(e.getMessage());
+			throw new IllegalStateException("Cannot send the token");
+		}
 		
-		return "User account confirmed";
+		
+		return new StringResponse("Verification email sent");
+	}
+	
+	private void sendVerificationEmail(User theUser, String token) {
+		// send the confirmation token via email
+		try {
+			this.emailService.send(
+					theUser.getEmail(), 
+					this.createConfirmationEmail(
+							theUser.getFirstName() + " " + theUser.getLastName(), token),
+					"Confirm your email");
+		} catch (MessagingException e) {
+			this.logger.error(e.toString());
+		}
+	}
+	
+	private void sendVerificationEmail(String email) {
+		Optional<User> theUser = this.userService.findByEmail(email);
+		String token = theUser.get().getConfirmationTokens().get(0).getToken();
+		// send the confirmation token via email
+		try {
+			this.emailService.send(
+					theUser.get().getEmail(), 
+					this.createConfirmationEmail(
+							theUser.get().getFirstName() + " " + theUser.get().getLastName(), token),
+					"Confirm your email");
+		} catch (MessagingException e) {
+			this.logger.error(e.toString());
+		}
 	}
 	
 	/**
@@ -105,7 +145,7 @@ public class UserRestController {
 		Context thymeleafContext = new Context();
 		thymeleafContext.setVariable("name", name);
 		thymeleafContext.setVariable("confirmationLink", 
-				"http://localhost:8080" + this.servletContext.getContextPath() + "/api/users/confirmation/" + token );
+				"http://localhost:4200" + "/confirm/" + token );
 		String htmlBody = 
 				thymeleafTemplateEngine.process("email/email-confirmation.html", thymeleafContext);
 		return htmlBody;

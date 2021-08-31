@@ -96,6 +96,11 @@ public class UserServiceImpl implements UserService {
 	private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> collection) {
 		return collection.stream().map(role -> 
 						new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+	}
+
+	@Override
+	public Optional<User> findByEmail(String email) {
+		return this.userDAO.findByEmail(email);
 	}	
 }
 

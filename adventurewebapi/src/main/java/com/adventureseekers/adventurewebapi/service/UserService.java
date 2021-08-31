@@ -16,6 +16,13 @@ public interface UserService extends UserDetailsService {
 	Optional<User> findByUserName(String userName);
 	
 	/**
+	 * Finds a use by the email
+	 * @param email The email of the user
+	 * @return The use with the given email
+	 */
+	Optional<User> findByEmail(String email);
+	
+	/**
 	 * Saves the given user to the database.
 	 * @param adventureUser The user to be saved
 	 * @exception If the user already exists. Email and user name must be unique.
