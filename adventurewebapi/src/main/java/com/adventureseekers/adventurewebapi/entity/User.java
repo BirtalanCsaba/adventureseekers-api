@@ -20,6 +20,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -39,6 +40,7 @@ public class User {
 	@Column(name = "username")
 	@NotNull(message = "is required")
 	@Size(min = 1, max = 50, message = "is required")
+	@Pattern(regexp="[^ ]*", message = "cannot contain space")
 	private String userName;
 	
 	@Column(name = "password")
@@ -104,7 +106,7 @@ public class User {
 	}
 
 	public void setUserName(String userName) {
-		this.userName = userName;
+		this.userName = userName.trim();
 	}
 
 	public String getPassword() {
@@ -112,7 +114,7 @@ public class User {
 	}
 
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = password.trim();
 	}
 
 	public String getEmail() {
@@ -120,7 +122,7 @@ public class User {
 	}
 
 	public void setEmail(String email) {
-		this.email = email;
+		this.email = email.trim();
 	}
 
 	public String getFirstName() {
@@ -128,7 +130,7 @@ public class User {
 	}
 
 	public void setFirstName(String firstName) {
-		this.firstName = firstName;
+		this.firstName = firstName.trim();
 	}
 
 	public String getLastName() {
@@ -136,7 +138,7 @@ public class User {
 	}
 
 	public void setLastName(String lastName) {
-		this.lastName = lastName;
+		this.lastName = lastName.trim();
 	}
 
 	public Date getBirthDate() {
