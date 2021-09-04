@@ -101,6 +101,16 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Optional<User> findByEmail(String email) {
 		return this.userDAO.findByEmail(email);
+	}
+
+	@Override
+	public Boolean existsByEmail(String email) {
+		return this.userDAO.existsByEmail(email);
+	}
+
+	@Override
+	public Boolean existsByUsername(String username) {
+		return this.userDAO.existsByUsername(username);
 	}	
 }
 

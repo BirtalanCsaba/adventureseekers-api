@@ -1,30 +1,27 @@
 package com.adventureseekers.adventurewebapi.rest;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
-import javax.mail.MessagingException;
-import javax.servlet.ServletContext;
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import com.adventureseekers.adventurewebapi.entity.ConfirmationToken;
 import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.helpers.EmailHelper;
 import com.adventureseekers.adventurewebapi.service.ConfirmationTokenService;
-import com.adventureseekers.adventurewebapi.service.EmailService;
 import com.adventureseekers.adventurewebapi.service.UserService;
 
 @RestController
@@ -40,13 +37,7 @@ public class UserRestController {
 	private UserService userService;
 	
 	@Autowired
-	private SpringTemplateEngine thymeleafTemplateEngine;
-	
-	@Autowired
-	private EmailService emailService;
-	
-	@Autowired
-    private ServletContext servletContext;
+	private EmailHelper emailHelper;
 	
 	/**
 	 * Registers a new user
@@ -74,7 +65,7 @@ public class UserRestController {
         
 		this.confirmationTokenService.saveConfirmationToken(confirmationToken);
 		
-		this.sendVerificationEmail(theUser, token);
+		this.emailHelper.sendVerificationEmail(theUser, token);
 		
 		return new StringResponse("Account created successfuly");
 	}
@@ -82,8 +73,8 @@ public class UserRestController {
 	/**
 	 * User token confirmation for account activation
 	 */
-	@PostMapping("/confirmation/{token}")
-	public StringResponse confirmation(@PathVariable String token) {
+	@GetMapping("/confirmation")
+	public StringResponse confirmation(@RequestParam("token") String token) {
 		// confirm the user`s token
 		this.confirmationTokenService.confirmUser(token);
 		return new StringResponse("Account confirmed");
@@ -93,11 +84,11 @@ public class UserRestController {
 	 * Resends the email with the verification token
 	 * @return
 	 */
-	@PostMapping("/resend/{email}")
-	public StringResponse resend(@PathVariable String email) {
+	@GetMapping("/resend")
+	public StringResponse resend(@RequestParam("email") String email) {
 		try {
 			this.confirmationTokenService.resetToken(email);
-			this.sendVerificationEmail(email);
+			this.emailHelper.sendVerificationEmail(email);
 		} catch (Exception e) {
 			this.logger.error(e.getMessage());
 			throw new IllegalStateException("Cannot send the token");
@@ -107,47 +98,24 @@ public class UserRestController {
 		return new StringResponse("Verification email sent");
 	}
 	
-	private void sendVerificationEmail(User theUser, String token) {
-		// send the confirmation token via email
-		try {
-			this.emailService.send(
-					theUser.getEmail(), 
-					this.createConfirmationEmail(
-							theUser.getFirstName() + " " + theUser.getLastName(), token),
-					"Confirm your email");
-		} catch (MessagingException e) {
-			this.logger.error(e.toString());
-		}
+	@GetMapping("/checkEmail")
+	public Map<String, Boolean> checkEmailExists(@RequestParam("email") String email) {
+		Boolean emailFound = this.userService.existsByEmail(email);
+		return Collections.singletonMap("success", emailFound);
 	}
 	
-	private void sendVerificationEmail(String email) {
-		Optional<User> theUser = this.userService.findByEmail(email);
-		String token = theUser.get().getConfirmationTokens().get(0).getToken();
-		// send the confirmation token via email
-		try {
-			this.emailService.send(
-					theUser.get().getEmail(), 
-					this.createConfirmationEmail(
-							theUser.get().getFirstName() + " " + theUser.get().getLastName(), token),
-					"Confirm your email");
-		} catch (MessagingException e) {
-			this.logger.error(e.toString());
-		}
-	}
-	
-	/**
-	 * Creates an email confirmation HTML page
-	 * @param name The name of the user
-	 * @param token The confirmation token
-	 * @return The HTML body as a string
-	 */
-	private String createConfirmationEmail(String name, String token) throws MessagingException {
-		Context thymeleafContext = new Context();
-		thymeleafContext.setVariable("name", name);
-		thymeleafContext.setVariable("confirmationLink", 
-				"http://localhost:4200" + "/confirm/" + token );
-		String htmlBody = 
-				thymeleafTemplateEngine.process("email/email-confirmation.html", thymeleafContext);
-		return htmlBody;
+	@GetMapping("/checkUsername")
+	public Map<String, Boolean> checkUsernameExists(@RequestParam("username") String username) {
+		Boolean usernameFound = this.userService.existsByUsername(username);
+		return Collections.singletonMap("success", usernameFound);
 	}
 }
+
+
+
+
+
+
+
+
+
