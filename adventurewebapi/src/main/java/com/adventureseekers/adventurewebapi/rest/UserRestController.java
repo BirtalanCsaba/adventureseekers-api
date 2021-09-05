@@ -1,9 +1,9 @@
 package com.adventureseekers.adventurewebapi.rest;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -11,10 +11,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.adventureseekers.adventurewebapi.entity.ConfirmationToken;
 import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserDetail;
+import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
 import com.adventureseekers.adventurewebapi.helpers.EmailHelper;
 import com.adventureseekers.adventurewebapi.service.ConfirmationTokenService;
 import com.adventureseekers.adventurewebapi.service.UserService;
+import com.adventureseekers.adventurewebapi.user.CustomUserDetail;
 
 @RestController
 @RequestMapping("/api/users")
@@ -111,6 +111,30 @@ public class UserRestController {
 	public Map<String, Boolean> checkUsernameExists(@RequestParam("username") String username) {
 		Boolean usernameFound = this.userService.existsByUsername(username);
 		return Collections.singletonMap("success", usernameFound);
+	}
+	
+	@GetMapping("/getUserInformation")
+	public CustomUserDetail getUserInformation(@RequestParam("username") String username) {
+		Optional<User> theUser = this.userService.findByUserName(username);
+		if (theUser.isEmpty()) {
+			throw new UserNotFoundException(username);
+		}
+		User theUserObj = theUser.get();
+		UserDetail theUserDetailObj = theUserObj.getUserDetail();
+		
+		CustomUserDetail customUser = new CustomUserDetail(
+				theUserObj.getUserName(),
+				theUserObj.getEmail(),
+				theUserObj.getFirstName(),
+				theUserObj.getLastName(),
+				theUserObj.getBirthDate(),
+				theUserDetailObj.getDescription(),
+				theUserDetailObj.getCounty(),
+				theUserDetailObj.getCounty(),
+				theUserDetailObj.getCity(),
+				theUserDetailObj.getProfileImage());
+		
+		return customUser;
 	}
 }
 

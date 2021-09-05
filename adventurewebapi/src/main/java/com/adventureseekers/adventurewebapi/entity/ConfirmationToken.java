@@ -17,7 +17,7 @@ import javax.persistence.Table;
 public class ConfirmationToken {
 	
 	@Id
-	@GeneratedValue(strategy  = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private Integer id;
 	

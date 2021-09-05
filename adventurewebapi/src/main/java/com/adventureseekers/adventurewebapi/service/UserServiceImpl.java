@@ -19,6 +19,7 @@ import com.adventureseekers.adventurewebapi.dao.RoleDAO;
 import com.adventureseekers.adventurewebapi.dao.UserDAO;
 import com.adventureseekers.adventurewebapi.entity.Role;
 import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserDetail;
 import com.adventureseekers.adventurewebapi.exception.UserAlreadyExistException;
 
 @Service
@@ -63,6 +64,9 @@ public class UserServiceImpl implements UserService {
 		
 		// give user default role of "employee"
 		user.setRoles(Arrays.asList(this.roleDAO.findRoleByName("ROLE_STANDARD").get()));
+		
+		// create user details
+		user.setUserDetail(new UserDetail());
 		
 		// save the user in the database
 		this.userDAO.save(user);

@@ -15,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -72,6 +73,11 @@ public class User {
 	
 	@Column(name = "enabled")
 	private boolean enabled = false;
+	
+	@OneToOne(cascade = CascadeType.ALL,
+			fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_detail_id", nullable = false)
+	private UserDetail userDetail;
 	
 	@OneToMany(mappedBy="user", fetch = FetchType.LAZY, 
 				cascade = CascadeType.ALL)
@@ -171,6 +177,14 @@ public class User {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public UserDetail getUserDetail() {
+		return userDetail;
+	}
+
+	public void setUserDetail(UserDetail userDetail) {
+		this.userDetail = userDetail;
 	}
 	
 }
