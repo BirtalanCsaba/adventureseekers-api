@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.adventureseekers.adventurewebapi.error.response.UserErrorResponse;
 import com.adventureseekers.adventurewebapi.exception.TokenNotFoundException;
 
 /**

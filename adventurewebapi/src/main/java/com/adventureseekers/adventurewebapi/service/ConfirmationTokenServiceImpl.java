@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.adventureseekers.adventurewebapi.dao.ConfirmationTokenDAO;
 import com.adventureseekers.adventurewebapi.dao.UserDAO;
-import com.adventureseekers.adventurewebapi.entity.ConfirmationToken;
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.ConfirmationTokenEntity;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.exception.TokenNotFoundException;
 import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
 
@@ -24,7 +24,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 	private UserDAO userDAO;
 
 	@Override
-	public void saveConfirmationToken(ConfirmationToken token) {
+	public void saveConfirmationToken(ConfirmationTokenEntity token) {
 		this.confirmationTokenDAO.save(token);
 	}
 	
@@ -33,7 +33,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 	 */
 	@Override
 	public void confirmUser(String token) throws IllegalStateException {
-		ConfirmationToken theToken = 
+		ConfirmationTokenEntity theToken = 
 				this.confirmationTokenDAO.findByToken(token)
 				.orElseThrow(() -> new IllegalStateException("Token not found"));
 		// check if the account is already confirmed
@@ -52,22 +52,22 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 		this.confirmationTokenDAO.save(theToken);
 		
 		// enable the user account
-		User theUser = theToken.getUser();
+		UserEntity theUser = theToken.getUser();
 		theUser.setEnabled(true);
 		this.userDAO.save(theUser);
 	}
 
 	@Override
-	public Optional<ConfirmationToken> findByToken(String token) {
+	public Optional<ConfirmationTokenEntity> findByToken(String token) {
 		return this.confirmationTokenDAO.findByToken(token);
 	}
 
 	@Override
 	public void resetToken(String email) throws IllegalStateException, TokenNotFoundException  {
-		Optional<User> currentUser = this.userDAO.findByEmail(email);
+		Optional<UserEntity> currentUser = this.userDAO.findByEmail(email);
 		if (currentUser.isPresent()) {
-			User userObj = currentUser.get();
-			ConfirmationToken token = userObj.getConfirmationTokens().get(0);
+			UserEntity userObj = currentUser.get();
+			ConfirmationTokenEntity token = userObj.getConfirmationTokens().get(0);
 			if (token.getExpiredAt().isAfter(LocalDateTime.now())) {
 				throw new IllegalStateException("Token is not expired");
 			}

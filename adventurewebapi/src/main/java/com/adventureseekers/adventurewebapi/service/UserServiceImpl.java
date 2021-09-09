@@ -2,6 +2,8 @@ package com.adventureseekers.adventurewebapi.service;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -14,13 +16,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.adventureseekers.adventurewebapi.dao.RoleDAO;
 import com.adventureseekers.adventurewebapi.dao.UserDAO;
-import com.adventureseekers.adventurewebapi.entity.Role;
-import com.adventureseekers.adventurewebapi.entity.User;
-import com.adventureseekers.adventurewebapi.entity.UserDetail;
+import com.adventureseekers.adventurewebapi.entity.RoleEntity;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
+import com.adventureseekers.adventurewebapi.entity.UserDetailEntity;
 import com.adventureseekers.adventurewebapi.exception.UserAlreadyExistException;
+import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -36,14 +40,14 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	@Transactional
-	public Optional<User> findByUserName(String userName) {
+	public Optional<UserEntity> findByUserName(String userName) {
 		// check the database if the user already exists
 		return this.userDAO.findByUsername(userName);
 	}
 	
 	@Override
 	@Transactional
-	public void save(User newUser) {
+	public void save(UserEntity newUser) {
 		// check the uniqueness of the user 
 		if (this.userDAO.existsByUsername(newUser.getUserName())) {
 			throw new UserAlreadyExistException("A user already exists with username - " + newUser.getUserName());
@@ -52,7 +56,7 @@ public class UserServiceImpl implements UserService {
 			throw new UserAlreadyExistException("A user already exists with email - " + newUser.getEmail());
 		}
 		
-		User user = new User();
+		UserEntity user = new UserEntity();
 		
 		// assign user details to the user object
 		user.setUserName(newUser.getUserName());
@@ -66,7 +70,7 @@ public class UserServiceImpl implements UserService {
 		user.setRoles(Arrays.asList(this.roleDAO.findRoleByName("ROLE_STANDARD").get()));
 		
 		// create user details
-		user.setUserDetail(new UserDetail());
+		user.setUserDetail(new UserDetailEntity());
 		
 		// save the user in the database
 		this.userDAO.save(user);
@@ -75,7 +79,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = 
+		UserEntity user = 
 				this.userDAO.findByUsername(username)
 				.orElseThrow(() -> new UsernameNotFoundException("Invalid username or password"));
 
@@ -97,13 +101,13 @@ public class UserServiceImpl implements UserService {
 	 * @param collection The roles to be converted
 	 * @return A map of authorities
 	 */
-	private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> collection) {
+	private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<RoleEntity> collection) {
 		return collection.stream().map(role -> 
 						new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
 	}
 
 	@Override
-	public Optional<User> findByEmail(String email) {
+	public Optional<UserEntity> findByEmail(String email) {
 		return this.userDAO.findByEmail(email);
 	}
 
@@ -115,6 +119,12 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Boolean existsByUsername(String username) {
 		return this.userDAO.existsByUsername(username);
+	}
+
+	@Override
+	public void update(UserEntity newUser) {
+		// save the user in the database
+		this.userDAO.save(newUser);
 	}	
 }
 

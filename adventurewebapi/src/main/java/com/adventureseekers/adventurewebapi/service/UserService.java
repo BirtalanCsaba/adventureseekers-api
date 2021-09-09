@@ -1,10 +1,12 @@
 package com.adventureseekers.adventurewebapi.service;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
+import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
 
 public interface UserService extends UserDetailsService {
 	
@@ -13,14 +15,14 @@ public interface UserService extends UserDetailsService {
 	 * @param userName The user name of the user
 	 * @return The use with the given user name
 	 */
-	Optional<User> findByUserName(String userName);
+	Optional<UserEntity> findByUserName(String userName);
 	
 	/**
 	 * Finds a use by the email
 	 * @param email The email of the user
 	 * @return The use with the given email
 	 */
-	Optional<User> findByEmail(String email);
+	Optional<UserEntity> findByEmail(String email);
 	
 	/**
 	 * Check if there is a user with the given email
@@ -41,5 +43,21 @@ public interface UserService extends UserDetailsService {
 	 * @param adventureUser The user to be saved
 	 * @exception If the user already exists. Email and user name must be unique.
 	 */
-	void save(User newUser);
+	void save(UserEntity newUser);
+	
+	/**
+	 * Updates the given user
+	 * @param newUser The user to be updated
+	 */
+	void update(UserEntity newUser);
 }
+
+
+
+
+
+
+
+
+
+

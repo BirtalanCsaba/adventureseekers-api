@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.service.UserService;
 
 @Component
@@ -26,7 +26,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 			Authentication authentication) throws IOException, ServletException {
 		String userName = authentication.getName();
 
-		User theUser = userService.findByUserName(userName).get();
+		UserEntity theUser = userService.findByUserName(userName).get();
 		
 		// now place in the session
 		HttpSession session = request.getSession();

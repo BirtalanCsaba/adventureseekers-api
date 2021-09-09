@@ -12,9 +12,20 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
 @Table(name = "confirmation_token")
-public class ConfirmationToken {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ConfirmationTokenEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,56 +47,13 @@ public class ConfirmationToken {
 	@ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, 
 						CascadeType.DETACH, CascadeType.REFRESH})
 	@JoinColumn(name = "user_id")
-	private User user;
-	
-	public ConfirmationToken() {
-		
-	}
+	@JsonIgnore
+	private UserEntity user;
 
-	public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiredAt, User user) {
+	public ConfirmationTokenEntity(String token, LocalDateTime createdAt, LocalDateTime expiredAt, UserEntity user) {
 		this.token = token;
 		this.createdAt = createdAt;
 		this.expiredAt = expiredAt;
-		this.user = user;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	public LocalDateTime getConfirmedAt() {
-		return confirmedAt;
-	}
-
-	public void setConfirmedAt(LocalDateTime confirmedAt) {
-		this.confirmedAt = confirmedAt;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getExpiredAt() {
-		return expiredAt;
-	}
-
-	public void setExpiredAt(LocalDateTime expiredAt) {
-		this.expiredAt = expiredAt;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
 		this.user = user;
 	}
 

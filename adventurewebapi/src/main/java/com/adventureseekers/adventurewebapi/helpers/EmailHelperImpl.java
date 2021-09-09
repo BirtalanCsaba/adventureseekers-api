@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.rest.UserRestController;
 import com.adventureseekers.adventurewebapi.service.EmailService;
 import com.adventureseekers.adventurewebapi.service.UserService;
@@ -35,7 +35,7 @@ public class EmailHelperImpl implements EmailHelper {
 	}
 
 	@Override
-	public void sendVerificationEmail(User theUser, String token) {
+	public void sendVerificationEmail(UserEntity theUser, String token) {
 		// send the confirmation token via email
 		try {
 			this.emailService.send(
@@ -50,7 +50,7 @@ public class EmailHelperImpl implements EmailHelper {
 
 	@Override
 	public void sendVerificationEmail(String email) {
-		Optional<User> theUser = this.userService.findByEmail(email);
+		Optional<UserEntity> theUser = this.userService.findByEmail(email);
 		String token = theUser.get().getConfirmationTokens().get(0).getToken();
 		// send the confirmation token via email
 		try {

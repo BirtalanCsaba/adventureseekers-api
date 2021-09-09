@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import com.adventureseekers.adventurewebapi.security.AuthenticationFilter;
 import com.adventureseekers.adventurewebapi.security.AuthorizationFilter;
@@ -35,12 +36,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManagerBean());
-		authenticationFilter.setFilterProcessesUrl("/login");
+		authenticationFilter.setFilterProcessesUrl("/api/auth/login");
 		
 		http.cors().and().csrf().disable().authorizeRequests()
-	        .antMatchers(HttpMethod.POST, "/api/users/register").permitAll()
-	        .antMatchers(HttpMethod.GET, "/api/users/confirmation/**").permitAll()
-	        .antMatchers(HttpMethod.GET, "/api/users/resend/**").permitAll()
+	        .antMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+	        .antMatchers(HttpMethod.GET, "/api/auth/confirmation/**").permitAll()
+	        .antMatchers(HttpMethod.GET, "/api/auth/resend/**").permitAll()
 	        .antMatchers(HttpMethod.GET, "/api/users/checkEmail/**").permitAll()
 	        .antMatchers(HttpMethod.GET, "/api/users/checkUsername/**").permitAll()
 	        .anyRequest().authenticated()
@@ -53,11 +54,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	 * Configuration for CORS
 	 */
 	@Bean
-	CorsConfigurationSource corsConfigurationSource() {
-		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
-		return source;
-	}
+    CorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
+        return source;
+    }
 	
 	// beans
     /**
@@ -84,6 +85,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   	@Override
   	public AuthenticationManager authenticationManagerBean() throws Exception {
   		return super.authenticationManagerBean();
+  	}
+  	
+  	@Bean
+  	ForwardedHeaderFilter forwardedHeaderFilter() {
+  	    return new ForwardedHeaderFilter();
   	}
 }
 

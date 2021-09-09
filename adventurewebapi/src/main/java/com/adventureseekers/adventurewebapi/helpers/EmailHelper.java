@@ -1,6 +1,6 @@
 package com.adventureseekers.adventurewebapi.helpers;
 
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 
 public interface EmailHelper {
 	
@@ -9,7 +9,7 @@ public interface EmailHelper {
 	 * @param theUser The user to be delivered
 	 * @param token The email verification token
 	 */
-	public void sendVerificationEmail(User theUser, String token);
+	public void sendVerificationEmail(UserEntity theUser, String token);
 	
 	/**
 	 * Sends verification email to the user which has the given email containing a link with the token

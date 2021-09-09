@@ -20,11 +20,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.adventureseekers.adventurewebapi.entity.Role;
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.RoleEntity;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +50,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	public Authentication attemptAuthentication(HttpServletRequest req,
 				HttpServletResponse res) throws AuthenticationException {
 		try {
-			User theUser = new ObjectMapper().readValue(req.getInputStream(), User.class);
+			UserEntity theUser = new ObjectMapper().readValue(req.getInputStream(), UserEntity.class);
 			String username = theUser.getUserName();
 			String password = theUser.getPassword();
 			UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -69,8 +70,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
                                         Authentication auth) throws IOException, ServletException {
 
-		org.springframework.security.core.userdetails.User user = 
-				(org.springframework.security.core.userdetails.User) auth.getPrincipal();
+		User user = (User) auth.getPrincipal();
 		Algorithm algorithm = Algorithm.HMAC512(SecurityConstants.KEY.getBytes());
 		String access_token = JWT.create()
 				.withSubject(user.getUsername())

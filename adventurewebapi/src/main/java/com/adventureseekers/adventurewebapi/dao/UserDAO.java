@@ -7,33 +7,33 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.adventureseekers.adventurewebapi.entity.User;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 
 public interface UserDAO
-		extends JpaRepository<User, UUID> {
+		extends JpaRepository<UserEntity, UUID> {
 	
 	/**
 	 * Gets a user by its user name
 	 * @param userName The user name of the user
 	 * @return The user object with the given user name
 	 */
-	@Query("SELECT u FROM User u WHERE u.userName =:uName")
-	public Optional<User> findByUsername(@Param("uName") String userName);
+	@Query("SELECT u FROM UserEntity u WHERE u.userName =:uName")
+	public Optional<UserEntity> findByUsername(@Param("uName") String userName);
 	
 	/**
 	 * Gets a user by the email
 	 * @param email The user email
 	 * @return The user with the given email
 	 */
-	@Query("SELECT u FROM User u WHERE u.email =:uEmail")
-	public Optional<User> findByEmail(@Param("uEmail") String email);
+	@Query("SELECT u FROM UserEntity u WHERE u.email =:uEmail")
+	public Optional<UserEntity> findByEmail(@Param("uEmail") String email);
 	
 	/**
 	 * Check whether a user exists with the given user name 
 	 * @param userName The user name of the user
 	 * @return True if the user exists, otherwise false.
 	 */
-	@Query("select count(u)>0 from User u where u.userName=:uName")
+	@Query("select count(u)>0 from UserEntity u where u.userName=:uName")
 	public boolean existsByUsername(@Param("uName") String userName);
 	
 	/**
@@ -41,7 +41,7 @@ public interface UserDAO
 	 * @param userName The email of the user
 	 * @return True if the user exists, otherwise false.
 	 */
-	@Query("select count(u)>0 from User u where u.email=:uEmail")
+	@Query("select count(u)>0 from UserEntity u where u.email=:uEmail")
 	public boolean existsByEmail(@Param("uEmail") String email);
 	
 	

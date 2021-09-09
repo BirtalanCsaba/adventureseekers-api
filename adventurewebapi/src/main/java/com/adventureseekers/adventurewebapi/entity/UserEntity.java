@@ -27,9 +27,20 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
 @Entity
 @Table(name="user")
-public class User {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString(exclude = "userDetail")
+public class UserEntity {
 	
 	@Id
 	@GeneratedValue(generator = "uuid2")
@@ -72,16 +83,16 @@ public class User {
 	private Date birthDate;
 	
 	@Column(name = "enabled")
-	private boolean enabled = false;
+	private boolean enabled;
 	
 	@OneToOne(cascade = CascadeType.ALL,
 			fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_detail_id", nullable = false)
-	private UserDetail userDetail;
+	private UserDetailEntity userDetail;
 	
 	@OneToMany(mappedBy="user", fetch = FetchType.LAZY, 
 				cascade = CascadeType.ALL)
-	private List<ConfirmationToken> confirmationTokens;
+	private List<ConfirmationTokenEntity> confirmationTokens;
 	
 	@ManyToMany(fetch = FetchType.LAZY, 
 			cascade = {
@@ -93,98 +104,41 @@ public class User {
 	@JoinTable(name = "users_roles", 
 			joinColumns = @JoinColumn(name = "user_id"), 
 			inverseJoinColumns = @JoinColumn(name = "role_id"))
-	private Collection<Role> roles;
+	private Collection<RoleEntity> roles;
+
+	public UserEntity(String userName, String password, String email,String firstName,
+			String lastName, Date birthDate, boolean enabled, UserDetailEntity userDetail,
+			List<ConfirmationTokenEntity> confirmationTokens, Collection<RoleEntity> roles) {
+		this.userName = userName.trim();
+		this.password = password.trim();
+		this.email = email.trim();
+		this.firstName = firstName.trim();
+		this.lastName = lastName.trim();
+		this.birthDate = birthDate;
+		this.enabled = enabled;
+		this.userDetail = userDetail;
+		this.confirmationTokens = confirmationTokens;
+		this.roles = roles;
+	}
 	
-	public User() {
-		
-	}
-
-	public UUID getId() {
-		return id;
-	}
-
-	public void setId(UUID id) {
-		this.id = id;
-	}
-
-	public String getUserName() {
-		return userName;
-	}
-
 	public void setUserName(String userName) {
 		this.userName = userName.trim();
 	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password.trim();
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
+	
 	public void setEmail(String email) {
 		this.email = email.trim();
 	}
-
-	public String getFirstName() {
-		return firstName;
-	}
-
+	
 	public void setFirstName(String firstName) {
 		this.firstName = firstName.trim();
 	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
+	
 	public void setLastName(String lastName) {
 		this.lastName = lastName.trim();
 	}
-
-	public Date getBirthDate() {
-		return birthDate;
-	}
-
-	public void setBirthDate(Date birthDate) {
-		this.birthDate = birthDate;
-	}
-
-	public List<ConfirmationToken> getConfirmationTokens() {
-		return confirmationTokens;
-	}
-
-	public void setConfirmationTokens(List<ConfirmationToken> confirmationTokens) {
-		this.confirmationTokens = confirmationTokens;
-	}
-
-	public Collection<Role> getRoles() {
-		return roles;
-	}
-
-	public void setRoles(Collection<Role> roles) {
-		this.roles = roles;
-	}
-
-	public boolean isEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public UserDetail getUserDetail() {
-		return userDetail;
-	}
-
-	public void setUserDetail(UserDetail userDetail) {
-		this.userDetail = userDetail;
+	
+	public void setPassword(String password) {
+		this.password = password.trim();
 	}
 	
 }

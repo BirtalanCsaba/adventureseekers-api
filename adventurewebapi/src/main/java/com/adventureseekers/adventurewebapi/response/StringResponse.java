@@ -1,4 +1,4 @@
-package com.adventureseekers.adventurewebapi.rest;
+package com.adventureseekers.adventurewebapi.response;
 
 public class StringResponse {
 	

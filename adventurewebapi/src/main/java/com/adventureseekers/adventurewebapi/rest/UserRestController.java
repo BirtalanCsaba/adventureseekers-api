@@ -1,31 +1,38 @@
 package com.adventureseekers.adventurewebapi.rest;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.Objects;
 
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.MethodParameter;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.adventureseekers.adventurewebapi.entity.ConfirmationToken;
-import com.adventureseekers.adventurewebapi.entity.User;
-import com.adventureseekers.adventurewebapi.entity.UserDetail;
+import com.adventureseekers.adventurewebapi.dto.UserDetailModel;
+import com.adventureseekers.adventurewebapi.dto.UserModel;
+import com.adventureseekers.adventurewebapi.entity.UserDetailEntity;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
-import com.adventureseekers.adventurewebapi.helpers.EmailHelper;
-import com.adventureseekers.adventurewebapi.service.ConfirmationTokenService;
+import com.adventureseekers.adventurewebapi.model.assembler.UserDetailModelAssembler;
+import com.adventureseekers.adventurewebapi.model.assembler.UserModelAssembler;
+import com.adventureseekers.adventurewebapi.response.StringResponse;
+import com.adventureseekers.adventurewebapi.service.UserDetailService;
 import com.adventureseekers.adventurewebapi.service.UserService;
-import com.adventureseekers.adventurewebapi.user.CustomUserDetail;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,72 +41,16 @@ public class UserRestController {
 	private Logger logger = LoggerFactory.getLogger(UserRestController.class);
 	
 	@Autowired
-	private ConfirmationTokenService confirmationTokenService;
-	
-	@Autowired
 	private UserService userService;
 	
 	@Autowired
-	private EmailHelper emailHelper;
+	private UserDetailService userDetailService;
 	
-	/**
-	 * Registers a new user
-	 * @param user The user to be registered
-	 */
-	@PostMapping("/register")
-	private StringResponse register(@Valid @RequestBody User user) {
-		// register the user
-		this.userService.save(user);
-		
-		// create a confirmation token
-		
-		// retrieve the new user
-        User theUser = this.userService.findByUserName(user.getUserName()).get();
-        
-        // create and save a confirmation token
-        String token = UUID.randomUUID().toString();
-        
-        ConfirmationToken confirmationToken = new ConfirmationToken(
-	        		token,
-	        		LocalDateTime.now(),
-	        		LocalDateTime.now().plusMinutes(30),
-	        		theUser
-        		);
-        
-		this.confirmationTokenService.saveConfirmationToken(confirmationToken);
-		
-		this.emailHelper.sendVerificationEmail(theUser, token);
-		
-		return new StringResponse("Account created successfuly");
-	}
+	@Autowired
+	private UserModelAssembler userModelAssembler;
 	
-	/**
-	 * User token confirmation for account activation
-	 */
-	@GetMapping("/confirmation")
-	public StringResponse confirmation(@RequestParam("token") String token) {
-		// confirm the user`s token
-		this.confirmationTokenService.confirmUser(token);
-		return new StringResponse("Account confirmed");
-	}
-	
-	/**
-	 * Resends the email with the verification token
-	 * @return
-	 */
-	@GetMapping("/resend")
-	public StringResponse resend(@RequestParam("email") String email) {
-		try {
-			this.confirmationTokenService.resetToken(email);
-			this.emailHelper.sendVerificationEmail(email);
-		} catch (Exception e) {
-			this.logger.error(e.getMessage());
-			throw new IllegalStateException("Cannot send the token");
-		}
-		
-		
-		return new StringResponse("Verification email sent");
-	}
+	@Autowired
+	private UserDetailModelAssembler userDetailModelAssembler;
 	
 	@GetMapping("/checkEmail")
 	public Map<String, Boolean> checkEmailExists(@RequestParam("email") String email) {
@@ -113,29 +64,205 @@ public class UserRestController {
 		return Collections.singletonMap("success", usernameFound);
 	}
 	
-	@GetMapping("/getUserInformation")
-	public CustomUserDetail getUserInformation(@RequestParam("username") String username) {
-		Optional<User> theUser = this.userService.findByUserName(username);
-		if (theUser.isEmpty()) {
-			throw new UserNotFoundException(username);
-		}
-		User theUserObj = theUser.get();
-		UserDetail theUserDetailObj = theUserObj.getUserDetail();
-		
-		CustomUserDetail customUser = new CustomUserDetail(
-				theUserObj.getUserName(),
-				theUserObj.getEmail(),
-				theUserObj.getFirstName(),
-				theUserObj.getLastName(),
-				theUserObj.getBirthDate(),
-				theUserDetailObj.getDescription(),
-				theUserDetailObj.getCounty(),
-				theUserDetailObj.getCounty(),
-				theUserDetailObj.getCity(),
-				theUserDetailObj.getProfileImage());
-		
-		return customUser;
+	@GetMapping("/{username}")
+	public ResponseEntity<UserModel> getUserByUsername(
+			@PathVariable("username") String username) {
+		return this.userService.findByUserName(username)
+				.map(this.userModelAssembler::toModel)
+				.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
+	
+	@GetMapping("/details/{username}")
+	public ResponseEntity<UserDetailModel> getUserDetailsByUsername(
+			@PathVariable("username") String username) {
+		UserDetailEntity userDetailEntity = this.userDetailService.getByUsername(username);
+		return ResponseEntity.ok(this.userDetailModelAssembler.toModel(userDetailEntity));
+	}
+	
+	@PatchMapping(path = "/{username}")
+	public ResponseEntity<StringResponse> patchUser(
+			@PathVariable String username, 
+			@Valid @RequestBody UserModel newUser, 
+			BindingResult bindingResult) 
+					throws MethodArgumentNotValidException, NoSuchMethodException, SecurityException {
+		
+		// The transmitted parameter errors
+		BindException actualErrors = new BindException(newUser, "user");
+		
+		UserEntity theUser = this.userService.findByUserName(username)
+				.orElseThrow(() -> new UserNotFoundException(username));
+		
+		// need to update the data
+		boolean needUpdate = false;
+		
+		if (StringUtils.hasLength(newUser.getUserName())) {
+			// validation
+			if (bindingResult.hasFieldErrors("userName")) {
+				actualErrors.addError(bindingResult.getFieldError("userName"));
+			}
+			else {
+				if (!Objects.equals(theUser.getUserName(), newUser.getUserName())) {
+					theUser.setUserName(newUser.getUserName());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUser.getEmail())) {
+			if (bindingResult.hasFieldErrors("email")) {
+				actualErrors.addError(bindingResult.getFieldError("email"));
+			}
+			else {
+				if (!Objects.equals(theUser.getEmail(), newUser.getEmail())) {
+					theUser.setEmail(newUser.getEmail());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUser.getFirstName())) {
+			if (bindingResult.hasFieldErrors("firstName")) {
+				actualErrors.addError(bindingResult.getFieldError("firstName"));
+			}
+			else {
+				if (!Objects.equals(theUser.getFirstName(), newUser.getFirstName())) {
+					theUser.setFirstName(newUser.getFirstName());
+					needUpdate = true;			
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUser.getLastName())) {
+			if (bindingResult.hasFieldErrors("lastName")) {
+				actualErrors.addError(bindingResult.getFieldError("lastName"));
+			}
+			else {
+				if (!Objects.equals(theUser.getLastName(), newUser.getLastName())) {
+					theUser.setLastName(newUser.getLastName());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (newUser.getBirthDate() != null) {
+			if (bindingResult.hasFieldErrors("birthDate")) {
+				actualErrors.addError(bindingResult.getFieldError("birthDate"));
+			}
+			else {
+				if (!Objects.equals(theUser.getBirthDate(), newUser.getBirthDate())) {
+					theUser.setBirthDate(newUser.getBirthDate());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (actualErrors.hasErrors()) {
+			MethodParameter parameter = new MethodParameter(
+					this.getClass().getMethod("patchUser", String.class, UserModel.class, BindingResult.class), 0);
+			throw new MethodArgumentNotValidException(parameter, actualErrors);
+		}
+		
+		if (needUpdate) {
+	        this.userService.update(theUser);
+	        return ResponseEntity.ok(new StringResponse("User updated successfuly"));
+	    }
+		
+		return ResponseEntity.ok(new StringResponse("User does not need to be updated"));
+	}
+	
+	@PatchMapping(path = "/details/{username}")
+	public ResponseEntity<StringResponse> patchUserDetails(
+			@PathVariable String username, 
+			@Valid @RequestBody UserDetailModel newUserDetail, 
+			BindingResult bindingResult) 
+					throws MethodArgumentNotValidException, NoSuchMethodException, SecurityException {
+		
+		// The transmitted parameter errors
+		BindException actualErrors = new BindException(newUserDetail, "userDetail");
+		
+		UserDetailEntity theUserDetail = this.userDetailService.getByUsername(username);
+		
+		// need to update the data
+		boolean needUpdate = false;
+		
+		if (StringUtils.hasLength(newUserDetail.getDescription())) {
+			// validation
+			if (bindingResult.hasFieldErrors("description")) {
+				actualErrors.addError(bindingResult.getFieldError("description"));
+			}
+			else {
+				if (!Objects.equals(theUserDetail.getDescription(), newUserDetail.getDescription())) {
+					theUserDetail.setDescription(newUserDetail.getDescription());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUserDetail.getCity())) {
+			// validation
+			if (bindingResult.hasFieldErrors("city")) {
+				actualErrors.addError(bindingResult.getFieldError("city"));
+			}
+			else {
+				if (!Objects.equals(theUserDetail.getCity(), newUserDetail.getCity())) {
+					theUserDetail.setCity(newUserDetail.getCity());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUserDetail.getCountry())) {
+			// validation
+			if (bindingResult.hasFieldErrors("country")) {
+				actualErrors.addError(bindingResult.getFieldError("country"));
+			}
+			else {
+				if (!Objects.equals(theUserDetail.getCountry(), newUserDetail.getCountry())) {
+					theUserDetail.setCountry(newUserDetail.getCountry());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (StringUtils.hasLength(newUserDetail.getCounty())) {
+			// validation
+			if (bindingResult.hasFieldErrors("city")) {
+				actualErrors.addError(bindingResult.getFieldError("city"));
+			}
+			else {
+				if (!Objects.equals(theUserDetail.getCounty(), newUserDetail.getCounty())) {
+					theUserDetail.setCounty(newUserDetail.getCounty());
+					needUpdate = true;
+				}
+			}
+		}
+		
+		if (newUserDetail.getProfileImage() != null) {
+			// validation
+			if (bindingResult.hasFieldErrors("profileImage")) {
+				actualErrors.addError(bindingResult.getFieldError("profileImage"));
+			}
+			else {
+				theUserDetail.setProfileImage(newUserDetail.getProfileImage());
+				needUpdate = true;
+			}
+		}
+		
+		if (actualErrors.hasErrors()) {
+			MethodParameter parameter = new MethodParameter(
+					this.getClass().getMethod("patchUserDetails", String.class, UserDetailModel.class, BindingResult.class), 0);
+			throw new MethodArgumentNotValidException(parameter, actualErrors);
+		}
+		
+		if (needUpdate) {
+	        this.userDetailService.update(theUserDetail);
+	        return ResponseEntity.ok(new StringResponse("User updated successfuly"));
+	    }
+		
+		return ResponseEntity.ok(new StringResponse("User does not need to be updated"));
+	}
+	
 }
 
 
