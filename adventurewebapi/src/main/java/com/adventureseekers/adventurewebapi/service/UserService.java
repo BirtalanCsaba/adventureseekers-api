@@ -1,6 +1,5 @@
 package com.adventureseekers.adventurewebapi.service;
 
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,6 +49,13 @@ public interface UserService extends UserDetailsService {
 	 * @param newUser The user to be updated
 	 */
 	void update(UserEntity newUser);
+	
+	/**
+	 * Delete the given user with the given username
+	 * @param username The username of the user
+	 * @exception UserNotFoundException if the username is not valid
+	 */
+	void delete(String username) throws UserNotFoundException;
 }
 
 

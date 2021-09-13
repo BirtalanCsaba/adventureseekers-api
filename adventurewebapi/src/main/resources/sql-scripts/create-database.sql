@@ -2,6 +2,23 @@ DROP DATABASE IF EXISTS `web-adventureseekers-romania`;
 
 CREATE DATABASE IF NOT EXISTS `web-adventureseekers-romania`;
 USE `web-adventureseekers-romania`;
+
+--
+-- Create the `user_detail` table
+--
+DROP TABLE IF EXISTS `user_detail`;
+
+CREATE TABLE `user_detail` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+    `description` varchar(200) DEFAULT NULL,
+    `country` varchar(60) DEFAULT NULL,
+    `county` varchar(60) DEFAULT NULL,
+    `city` varchar(60) DEFAULT NULL,
+    `profile_image` mediumblob DEFAULT NULL,
+    
+    primary key (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 --
 -- Create the `user` table
 --
@@ -17,14 +34,22 @@ CREATE TABLE `user` (
     `last_name` varchar(50) NOT NULL,
     `birth_date` DATE NOT NULL,
     `enabled` boolean DEFAULT false,
+    `user_detail_id` int(11) DEFAULT NULL,
+    
     primary key (`id`),
+    
+    KEY `FK_DETAIL_idx` (`user_detail_id`),
+	CONSTRAINT `FK_DETAIL` 
+    FOREIGN KEY (`user_detail_id`) 
+    REFERENCES `user_detail` (`id`),
+    
     unique (`username`),
     unique (`email`)
 )ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 SET @user_id := UUID();
 INSERT INTO user (`id`, `username`, `password`, `email`, `first_name`, `last_name`, `birth_date`, `enabled`)
-VALUES (@user_id, 'csababirtalan', '$2y$12$A0NOCJdsZ..rSsa3i7haQ.qA1Dd7Z54U4G1NWJyaefOo7W4k0gekO', 'csababirtalan14@gmail.com', 'Csaba', 'Birtalan', DATE('2001-12-14'), true);
+VALUES (@user_id, 'csababirtalan', '$2a$12$D1Mqul7Fwc.06RrhAMo/Pek5iM8dDLL1Zb//RBITfuemigEJM4ip.', 'csababirtalan14@gmail.com', 'Csaba', 'Birtalan', DATE('2001-12-14'), true);
 
 --
 -- Create the `role` table
@@ -62,7 +87,7 @@ CREATE TABLE `users_roles` (
     
     CONSTRAINT `FK_USER_05` FOREIGN KEY (`user_id`)
     REFERENCES `user` (`id`)
-    ON DELETE NO ACTION ON UPDATE NO ACTION,
+    ON DELETE CASCADE,
     
     CONSTRAINT `FK_ROLE` FOREIGN KEY (`role_id`)
     REFERENCES `role` (`id`)
@@ -90,11 +115,10 @@ CREATE TABLE `confirmation_token` (
     
     KEY `FK_USER_idx` (`user_id`),
     
-	CONSTRAINT `FK_USER_06` FOREIGN KEY (`user_id`)
+	CONSTRAINT `FK_USER_06` 
+    FOREIGN KEY (`user_id`)
 	REFERENCES `user` (`id`)
-    ON DELETE NO ACTION ON UPDATE NO ACTION
+    ON DELETE CASCADE
 )ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
-
 
 

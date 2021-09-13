@@ -87,7 +87,7 @@ public class UserEntity {
 	
 	@OneToOne(cascade = CascadeType.ALL,
 			fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_detail_id", nullable = false)
+	@JoinColumn(name = "user_detail_id")
 	private UserDetailEntity userDetail;
 	
 	@OneToMany(mappedBy="user", fetch = FetchType.LAZY, 
@@ -106,7 +106,7 @@ public class UserEntity {
 			inverseJoinColumns = @JoinColumn(name = "role_id"))
 	private Collection<RoleEntity> roles;
 
-	public UserEntity(String userName, String password, String email,String firstName,
+	public UserEntity(String userName, String password, String email, String firstName,
 			String lastName, Date birthDate, boolean enabled, UserDetailEntity userDetail,
 			List<ConfirmationTokenEntity> confirmationTokens, Collection<RoleEntity> roles) {
 		this.userName = userName.trim();

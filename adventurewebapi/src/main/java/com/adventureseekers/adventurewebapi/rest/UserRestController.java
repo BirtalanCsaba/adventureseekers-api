@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -78,6 +79,13 @@ public class UserRestController {
 			@PathVariable("username") String username) {
 		UserDetailEntity userDetailEntity = this.userDetailService.getByUsername(username);
 		return ResponseEntity.ok(this.userDetailModelAssembler.toModel(userDetailEntity));
+	}
+	
+	@DeleteMapping("/{username}")
+	public ResponseEntity<StringResponse> deleteUserByUsername(
+			@PathVariable("username") String username) {
+		this.userService.delete(username);
+		return ResponseEntity.ok(new StringResponse("User " + username + " deleted"));
 	}
 	
 	@PatchMapping(path = "/{username}")

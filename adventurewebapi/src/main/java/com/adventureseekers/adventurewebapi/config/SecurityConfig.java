@@ -1,6 +1,5 @@
 package com.adventureseekers.adventurewebapi.config;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,13 +55,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	/**
 	 * Configuration for CORS
 	 */
-	/*@Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", 
-        		new CorsConfiguration().applyPermitDefaultValues());
-        return source;
-    }*/
 	
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {

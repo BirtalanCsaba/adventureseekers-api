@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -56,11 +57,9 @@ public class UserDetailEntity {
     @Column(name = "profile_image", columnDefinition = "mediumblob")
 	private Byte[] profileImage;
 	
-	@OneToOne(mappedBy = "userDetail",
-			cascade = CascadeType.ALL)
-	@JsonIgnore
+	@OneToOne(mappedBy="userDetail", cascade = CascadeType.ALL)
 	private UserEntity user;
-
+	
 	public UserDetailEntity(String description, String country, String county, String city, Byte[] profileImage) {
 		this.description = description.trim();
 		this.country = country.trim();

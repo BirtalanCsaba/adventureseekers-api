@@ -2,16 +2,19 @@ package com.adventureseekers.adventurewebapi.service;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,13 +24,16 @@ import org.springframework.util.StringUtils;
 import com.adventureseekers.adventurewebapi.dao.RoleDAO;
 import com.adventureseekers.adventurewebapi.dao.UserDAO;
 import com.adventureseekers.adventurewebapi.entity.RoleEntity;
-import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.entity.UserDetailEntity;
+import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.exception.UserAlreadyExistException;
 import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
+import com.adventureseekers.adventurewebapi.rest.UserRestController;
 
 @Service
 public class UserServiceImpl implements UserService {
+	
+	private Logger logger = LoggerFactory.getLogger(UserRestController.class);
 	
 	@Autowired
 	private UserDAO userDAO;
@@ -125,7 +131,25 @@ public class UserServiceImpl implements UserService {
 	public void update(UserEntity newUser) {
 		// save the user in the database
 		this.userDAO.save(newUser);
-	}	
+	}
+
+	@Override
+	public void delete(String username) throws UserNotFoundException {
+		this.checkRequestPermission(username);
+		UserEntity theUser = this.userDAO.findByUsername(username)
+				.orElseThrow(() -> new UserNotFoundException(username));
+		this.userDAO.deleteById(theUser.getId());
+	}
+	
+	private void checkRequestPermission(String username) throws IllegalStateException {
+		// TODO: make an AOP which check the permission
+		// the currently logged in user's username
+		String authUsername =
+				SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+		if (!StringUtils.pathEquals(username, authUsername)) {
+			throw new IllegalStateException("Access Denied");
+		}
+	}
 }
 
 
