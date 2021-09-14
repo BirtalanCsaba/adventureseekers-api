@@ -46,11 +46,6 @@ public interface UserDAO
 	 */
 	@Query("select count(u)>0 from UserEntity u where u.email=:uEmail")
 	public boolean existsByEmail(@Param("uEmail") String email);
-	
-	@Transactional
-	@Modifying
-	@Query("delete from UserEntity u where u.userName=:uName")
-	public void deleteByUsername(@Param("uName") String userName);
 }
 
 

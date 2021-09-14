@@ -95,11 +95,6 @@ public class UserServiceImpl implements UserService {
 		}
 		return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getPassword(),
 				mapRolesToAuthorities(user.getRoles()));
-		/*CustomUserDetail customUserDetail = new CustomUserDetail();
-		customUserDetail.setUser(user);
-		customUserDetail.setAuthorities(mapRolesToAuthorities(user.getRoles()));
-		
-		return customUserDetail;*/
 	}
 	
 	/**
