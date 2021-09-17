@@ -122,23 +122,38 @@ public class UserEntity {
 	}
 	
 	public void setUserName(String userName) {
-		this.userName = userName.trim();
+		if (userName != null)
+			this.userName = userName.trim();
+		else 
+			this.userName = userName;
 	}
 	
 	public void setEmail(String email) {
-		this.email = email.trim();
+		if (email != null)
+			this.email = email.trim();
+		else
+			this.email = email;
 	}
 	
 	public void setFirstName(String firstName) {
-		this.firstName = firstName.trim();
+		if (firstName != null)
+			this.firstName = firstName.trim();
+		else
+			this.firstName = firstName;
 	}
 	
 	public void setLastName(String lastName) {
-		this.lastName = lastName.trim();
+		if (lastName != null) 
+			this.lastName = lastName.trim();
+		else
+			this.lastName = lastName;
 	}
 	
 	public void setPassword(String password) {
-		this.password = password.trim();
+		if (password != null)
+			this.password = password.trim();
+		else
+			this.password = password;
 	}
 	
 }

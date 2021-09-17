@@ -50,7 +50,8 @@ public class ConfirmationTokenEntity {
 	@JsonIgnore
 	private UserEntity user;
 
-	public ConfirmationTokenEntity(String token, LocalDateTime createdAt, LocalDateTime expiredAt, UserEntity user) {
+	public ConfirmationTokenEntity(String token, LocalDateTime createdAt, 
+			LocalDateTime expiredAt, UserEntity user) {
 		this.token = token;
 		this.createdAt = createdAt;
 		this.expiredAt = expiredAt;

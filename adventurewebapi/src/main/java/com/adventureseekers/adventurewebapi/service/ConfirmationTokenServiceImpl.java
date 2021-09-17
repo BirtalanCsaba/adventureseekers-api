@@ -32,10 +32,10 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 	 * Activates the user account by the given token
 	 */
 	@Override
-	public void confirmUser(String token) throws IllegalStateException {
+	public void confirmUser(String token) throws IllegalStateException, TokenNotFoundException {
 		ConfirmationTokenEntity theToken = 
 				this.confirmationTokenDAO.findByToken(token)
-				.orElseThrow(() -> new IllegalStateException("Token not found"));
+				.orElseThrow(() -> new TokenNotFoundException(token));
 		// check if the account is already confirmed
 		if (theToken.getConfirmedAt() != null) {
 			throw new IllegalStateException("Account already confirmed");
@@ -64,21 +64,18 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 
 	@Override
 	public void resetToken(String email) throws IllegalStateException, TokenNotFoundException  {
-		Optional<UserEntity> currentUser = this.userDAO.findByEmail(email);
-		if (currentUser.isPresent()) {
-			UserEntity userObj = currentUser.get();
-			ConfirmationTokenEntity token = userObj.getConfirmationTokens().get(0);
-			if (token.getExpiredAt().isAfter(LocalDateTime.now())) {
-				throw new IllegalStateException("Token is not expired");
-			}
-			token.setCreatedAt(LocalDateTime.now());
-			token.setExpiredAt(LocalDateTime.now().plusMinutes(15));
-			token.setToken(UUID.randomUUID().toString());
-			this.confirmationTokenDAO.save(token);
+		UserEntity currentUser = 
+				this.userDAO.findByEmail(email)
+				.orElseThrow(() -> new UserNotFoundException(email));
+		
+		ConfirmationTokenEntity token = currentUser.getConfirmationTokens().get(0);
+		if (token.getExpiredAt().isAfter(LocalDateTime.now())) {
+			throw new IllegalStateException("Token is not expired");
 		}
-		else {
-			throw new UserNotFoundException("User not found");
-		}
+		token.setCreatedAt(LocalDateTime.now());
+		token.setExpiredAt(LocalDateTime.now().plusMinutes(15));
+		token.setToken(UUID.randomUUID().toString());
+		this.confirmationTokenDAO.save(token);
 		
 	}
 }

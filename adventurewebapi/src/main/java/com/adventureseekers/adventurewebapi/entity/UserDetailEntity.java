@@ -60,7 +60,8 @@ public class UserDetailEntity {
 	@OneToOne(mappedBy="userDetail", cascade = CascadeType.ALL)
 	private UserEntity user;
 	
-	public UserDetailEntity(String description, String country, String county, String city, Byte[] profileImage) {
+	public UserDetailEntity(String description, String country, String county, 
+			String city, Byte[] profileImage) {
 		this.description = description.trim();
 		this.country = country.trim();
 		this.county = county.trim();

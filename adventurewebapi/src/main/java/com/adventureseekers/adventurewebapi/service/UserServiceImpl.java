@@ -10,11 +10,10 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -53,7 +52,7 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	@Transactional
-	public void save(UserEntity newUser) {
+	public void save(UserEntity newUser) throws UserAlreadyExistException {
 		// check the uniqueness of the user 
 		if (this.userDAO.existsByUsername(newUser.getUserName())) {
 			throw new UserAlreadyExistException("A user already exists with username - " + newUser.getUserName());
@@ -93,7 +92,7 @@ public class UserServiceImpl implements UserService {
 		if (!user.isEnabled()) {
 			throw new UsernameNotFoundException("The user account is not enabled");
 		}
-		return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getPassword(),
+		return new User(user.getUserName(), user.getPassword(),
 				mapRolesToAuthorities(user.getRoles()));
 	}
 	
@@ -130,21 +129,22 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public void delete(String username) throws UserNotFoundException {
-		this.checkRequestPermission(username);
+		// TODO: AOP for resource protection
+		//this.checkRequestPermission(username);
 		UserEntity theUser = this.userDAO.findByUsername(username)
 				.orElseThrow(() -> new UserNotFoundException(username));
 		this.userDAO.deleteById(theUser.getId());
 	}
 	
-	private void checkRequestPermission(String username) throws IllegalStateException {
-		// TODO: make an AOP which check the permission
-		// the currently logged in user's username
+	/*private void checkRequestPermission(String username) throws IllegalStateException {
+		// TODO: make an AOP which checks the permission
+		// the currently logged in user's user name
 		String authUsername =
 				SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 		if (!StringUtils.pathEquals(username, authUsername)) {
 			throw new IllegalStateException("Access Denied");
 		}
-	}
+	}*/
 }
 
 

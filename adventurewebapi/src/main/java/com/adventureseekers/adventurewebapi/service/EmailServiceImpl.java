@@ -29,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
 			helper.setText(email, true);
 			helper.setTo(to);
 			helper.setSubject(subject);
-			helper.setFrom("no-reply@adventureseekers.com");
+			helper.setFrom("no-reply@adventureseekers.go.ro");
 			this.mailSender.send(mimeMessage);
 		} catch (MessagingException e) {
 			this.logger.error("failed to send email", e);
