@@ -15,5 +15,5 @@ public interface EmailHelper {
 	 * Sends verification email to the user which has the given email containing a link with the token
 	 * @param email The email of the user
 	 */
-	public void sendVerificationEmail(String email);
+	//public void sendVerificationEmail(String email);
 }

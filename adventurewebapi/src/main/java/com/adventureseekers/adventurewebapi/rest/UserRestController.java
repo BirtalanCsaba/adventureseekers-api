@@ -29,6 +29,7 @@ import com.adventureseekers.adventurewebapi.dto.UserModel;
 import com.adventureseekers.adventurewebapi.entity.UserDetailEntity;
 import com.adventureseekers.adventurewebapi.entity.UserEntity;
 import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
+import com.adventureseekers.adventurewebapi.helpers.EmailHelper;
 import com.adventureseekers.adventurewebapi.model.assembler.UserDetailModelAssembler;
 import com.adventureseekers.adventurewebapi.model.assembler.UserModelAssembler;
 import com.adventureseekers.adventurewebapi.response.StringResponse;
@@ -46,6 +47,9 @@ public class UserRestController {
 	
 	@Autowired
 	private UserDetailService userDetailService;
+	
+	@Autowired
+	private EmailHelper emailHelper;
 	
 	@Autowired
 	private UserModelAssembler userModelAssembler;
@@ -122,10 +126,30 @@ public class UserRestController {
 				actualErrors.addError(bindingResult.getFieldError("email"));
 			}
 			else {
-				if (!Objects.equals(theUser.getEmail(), newUser.getEmail())) {
-					theUser.setEmail(newUser.getEmail());
+				/*if (!Objects.equals(theUser.getEmail(), newUser.getEmail())) {
+					// change only the pending email
+					// the user needs to confirm the email in order to have it changed permanently
+					theUser.setPendingEmail(newUser.getEmail());
+					
+					// create email confirmation token
+					// create and save a confirmation token
+			        String token = UUID.randomUUID().toString();
+			        
+			        ConfirmationTokenEntity confirmationToken = new ConfirmationTokenEntity(
+				        		token,
+				        		LocalDateTime.now(),
+				        		LocalDateTime.now().plusDays(7),
+				        		theUser
+			        		);
+			        
+			        // save the token
+			        this.confirmationTokenService.saveConfirmationToken(confirmationToken);
+			        
+			        // send an email to the user with the confirmation link
+			        this.emailHelper.sendVerificationEmail(theUser, token);
+					
 					needUpdate = true;
-				}
+				}*/
 			}
 		}
 		

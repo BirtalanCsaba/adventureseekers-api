@@ -92,7 +92,7 @@ public class UserEntity {
 	
 	@OneToMany(mappedBy="user", fetch = FetchType.LAZY, 
 				cascade = CascadeType.ALL)
-	private List<ConfirmationTokenEntity> confirmationTokens;
+	private List<PendingEmailEntity> pendingEmail;
 	
 	@ManyToMany(fetch = FetchType.LAZY, 
 			cascade = {
@@ -108,7 +108,7 @@ public class UserEntity {
 
 	public UserEntity(String userName, String password, String email, String firstName,
 			String lastName, Date birthDate, boolean enabled, UserDetailEntity userDetail,
-			List<ConfirmationTokenEntity> confirmationTokens, Collection<RoleEntity> roles) {
+			Collection<RoleEntity> roles) {
 		this.userName = userName.trim();
 		this.password = password.trim();
 		this.email = email.trim();
@@ -117,7 +117,6 @@ public class UserEntity {
 		this.birthDate = birthDate;
 		this.enabled = enabled;
 		this.userDetail = userDetail;
-		this.confirmationTokens = confirmationTokens;
 		this.roles = roles;
 	}
 	

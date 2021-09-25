@@ -59,7 +59,6 @@ public class UserServiceTest {
         		new Date(), 
         		false, 
         		new UserDetailEntity(), 
-        		null, 
         		Arrays.asList(new RoleEntity("ROLE_STANDARD")));
 	}
 	

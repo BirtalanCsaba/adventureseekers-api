@@ -48,7 +48,7 @@ public class EmailHelperImpl implements EmailHelper {
 		}
 	}
 
-	@Override
+	/*@Override
 	public void sendVerificationEmail(String email) {
 		Optional<UserEntity> theUser = this.userService.findByEmail(email);
 		String token = theUser.get().getConfirmationTokens().get(0).getToken();
@@ -62,7 +62,7 @@ public class EmailHelperImpl implements EmailHelper {
 		} catch (MessagingException e) {
 			this.logger.error(e.toString());
 		}
-	}
+	}*/
 	
 	/**
 	 * Creates an email confirmation HTML page

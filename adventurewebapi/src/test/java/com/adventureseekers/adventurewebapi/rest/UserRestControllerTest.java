@@ -49,7 +49,6 @@ public class UserRestControllerTest {
 	    		new Date(), 
 	    		false, 
 	    		new UserDetailEntity(), 
-	    		null, 
 	    		null);
 	   mockMvc = MockMvcBuilders.standaloneSetup(this.userRestController).build();
 	}

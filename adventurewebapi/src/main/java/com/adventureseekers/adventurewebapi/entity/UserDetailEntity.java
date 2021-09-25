@@ -3,6 +3,7 @@ package com.adventureseekers.adventurewebapi.entity;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -57,7 +58,10 @@ public class UserDetailEntity {
     @Column(name = "profile_image", columnDefinition = "mediumblob")
 	private Byte[] profileImage;
 	
-	@OneToOne(mappedBy="userDetail", cascade = CascadeType.ALL)
+	@OneToOne(
+			mappedBy="userDetail", 
+			cascade = CascadeType.ALL, 
+			fetch = FetchType.LAZY)
 	private UserEntity user;
 	
 	public UserDetailEntity(String description, String country, String county, 

@@ -35,7 +35,6 @@ public class UserDAOTest {
         		new Date(), 
         		false, 
         		new UserDetailEntity(), 
-        		null, 
         		null);
     }
 	

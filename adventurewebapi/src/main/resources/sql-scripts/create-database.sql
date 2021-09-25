@@ -49,7 +49,7 @@ CREATE TABLE `user` (
 
 SET @user_id := UUID();
 INSERT INTO user (`id`, `username`, `password`, `email`, `first_name`, `last_name`, `birth_date`, `enabled`)
-VALUES (@user_id, 'csababirtalan', '$2a$12$D1Mqul7Fwc.06RrhAMo/Pek5iM8dDLL1Zb//RBITfuemigEJM4ip.', 'csababirtalan14@gmail.com', 'Csaba', 'Birtalan', DATE('2001-12-14'), true);
+VALUES (@user_id, 'csababirtalan', '$2a$12$D1Mqul7Fwc.06RrhAMo/Pek5iM8dDLL1Zb//RBITfuemigEJM4ip.', 'csababirtalan144@gmail.com', 'Csaba', 'Birtalan', DATE('2001-12-14'), true);
 
 --
 -- Create the `role` table
@@ -109,16 +109,41 @@ CREATE TABLE `confirmation_token` (
     `created_at` DATETIME NOT NULL,
     `expired_at` DATETIME NOT NULL,
     `token` varchar(36) NOT NULL,
-    `user_id` varchar(36) NOT NULL,
+    
+    PRIMARY KEY (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `pending_email` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`user_id` varchar(36) NOT NULL,
+    `confirmation_token_id` int(11) NOT NULL,
+    `email` varchar(50) NOT NULL,
     
     PRIMARY KEY (`id`),
     
-    KEY `FK_USER_idx` (`user_id`),
+    UNIQUE(`user_id`, `confirmation_token_id`),
     
-	CONSTRAINT `FK_USER_06` 
-    FOREIGN KEY (`user_id`)
-	REFERENCES `user` (`id`)
-    ON DELETE CASCADE
+    KEY `FK_CONFIRMATION_TOKEN_idx` (`confirmation_token_id`),
+    
+    CONSTRAINT `FK_USER_10` FOREIGN KEY (`user_id`)
+    REFERENCES `user` (`id`)
+    ON DELETE CASCADE,
+    
+    CONSTRAINT `FK_CONFIRMATION_TOKEN` FOREIGN KEY (`confirmation_token_id`)
+    REFERENCES `confirmation_token` (`id`)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
 )ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
