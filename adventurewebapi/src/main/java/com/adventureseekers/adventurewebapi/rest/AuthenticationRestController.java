@@ -5,6 +5,8 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.adventureseekers.adventurewebapi.entity.UserEntity;
+import com.adventureseekers.adventurewebapi.exception.UserNotFoundException;
 import com.adventureseekers.adventurewebapi.response.StringResponse;
 import com.adventureseekers.adventurewebapi.service.PendingEmailService;
 import com.adventureseekers.adventurewebapi.service.UserService;
@@ -34,26 +37,30 @@ public class AuthenticationRestController {
 	 * @param user The user to be registered
 	 */
 	@PostMapping("/register")
-	private StringResponse register(@Valid @RequestBody UserEntity user) {
+	private ResponseEntity<StringResponse> register(
+			@Valid @RequestBody UserEntity user) {
 		// register the user
 		this.userService.save(user);
 		
 		// retrieve the new user
-        UserEntity theUser = this.userService.findByUserName(user.getUserName()).get();
+        UserEntity theUser = this.userService.findByUserName(user.getUserName())
+        		.orElseThrow(() -> new UserNotFoundException(user.getUserName()));
         
 		this.pendingEmailService.create(theUser, theUser.getEmail());
 		
-		return new StringResponse("Account created successfuly");
+		return new ResponseEntity<StringResponse>(
+				new StringResponse("Account created successfuly"), HttpStatus.CREATED);
 	}
 	
 	/**
 	 * User token confirmation for account activation
 	 */
 	@GetMapping("/confirmation")
-	public StringResponse confirmation(@RequestParam("token") String token) {
+	public ResponseEntity<StringResponse> confirmation(
+			@RequestParam("token") String token) {
 		// confirm the user`s token
 		this.pendingEmailService.confirmEmail(token);
-		return new StringResponse("Account confirmed");
+		return ResponseEntity.ok(new StringResponse("Account confirmed"));
 	}
 	
 	/**
@@ -61,7 +68,8 @@ public class AuthenticationRestController {
 	 * @return
 	 */
 	@GetMapping("/resend")
-	public StringResponse resend(@RequestParam("email") String email) {
+	public ResponseEntity<StringResponse> resend(
+			@RequestParam("email") String email) {
 		try {
 			this.pendingEmailService.resetTokenEmail(email);
 			// this.emailHelper.sendVerificationEmail(email);
@@ -71,6 +79,24 @@ public class AuthenticationRestController {
 			throw new IllegalStateException("Cannot send the token");
 		}
 		
-		return new StringResponse("Verification email sent");
+		return ResponseEntity.ok(new StringResponse("Verification email sent"));
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -74,19 +74,31 @@ public class UserDetailEntity {
 	}
 	
 	public void setDescription(String description) {
-		this.description = description.trim();
+		if (description != null)
+			this.description = description.trim();
+		else 
+			this.description = description;
 	}
 	
 	public void setCity(String city) {
-		this.city = city.trim();
+		if (city != null)
+			this.city = city.trim();
+		else 
+			this.city = city;
 	}
 	
 	public void setCountry(String country) {
-		this.country = country.trim();
+		if (country != null)
+			this.country = country.trim();
+		else 
+			this.country = country;
 	}
 	
 	public void setCounty(String county) {
-		this.county = county.trim();
+		if (county != null)
+			this.county = county.trim();
+		else 
+			this.county = county;
 	}
 
 
