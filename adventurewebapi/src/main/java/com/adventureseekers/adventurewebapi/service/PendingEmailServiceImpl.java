@@ -1,6 +1,7 @@
 package com.adventureseekers.adventurewebapi.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import com.adventureseekers.adventurewebapi.dao.UserDAO;
 import com.adventureseekers.adventurewebapi.entity.ConfirmationTokenEntity;
 import com.adventureseekers.adventurewebapi.entity.PendingEmailEntity;
 import com.adventureseekers.adventurewebapi.entity.UserEntity;
+import com.adventureseekers.adventurewebapi.exception.PendingEmailAlreadyExistsException;
 import com.adventureseekers.adventurewebapi.exception.PendingEmailNotFoundException;
 import com.adventureseekers.adventurewebapi.exception.TokenAlreadyConfirmedException;
 import com.adventureseekers.adventurewebapi.exception.TokenExpiredException;
@@ -40,10 +42,17 @@ public class PendingEmailServiceImpl
 	
 	@Override
 	public void create(UserEntity theUser, String pendingEmail) 
-			throws UserNotFoundException, TokenNotFoundException {
+			throws UserNotFoundException, TokenNotFoundException,
+				PendingEmailAlreadyExistsException {
 		// check if the user is valid
 		if (!this.userDAO.existsById(theUser.getId()))
 			throw new UserNotFoundException(theUser.getUserName());
+		
+		Optional<PendingEmailEntity> pendingEmailEntityOpt = 
+				this.pendingEmailDAO.findPendingEmail(theUser);
+		if (pendingEmailEntityOpt.isPresent()) {
+			throw new PendingEmailAlreadyExistsException("There is already a pending email");
+		}
 		
 		// create the token
 		String token = UUID.randomUUID().toString();

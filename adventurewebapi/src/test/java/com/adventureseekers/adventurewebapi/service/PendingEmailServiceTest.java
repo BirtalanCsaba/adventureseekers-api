@@ -33,6 +33,7 @@ import com.adventureseekers.adventurewebapi.entity.PendingEmailEntity;
 import com.adventureseekers.adventurewebapi.entity.RoleEntity;
 import com.adventureseekers.adventurewebapi.entity.UserDetailEntity;
 import com.adventureseekers.adventurewebapi.entity.UserEntity;
+import com.adventureseekers.adventurewebapi.exception.PendingEmailAlreadyExistsException;
 import com.adventureseekers.adventurewebapi.exception.PendingEmailNotFoundException;
 import com.adventureseekers.adventurewebapi.exception.TokenAlreadyConfirmedException;
 import com.adventureseekers.adventurewebapi.exception.TokenExpiredException;
@@ -307,6 +308,18 @@ public class PendingEmailServiceTest {
 		assertThatThrownBy(() -> this.underTest.resetTokenEmail(this.pendingEmail))
 			.isInstanceOf(TokenExpiredException.class)
 			.hasMessage("Token expired - " + "Token is not expired");
+	}
+	
+	@Test
+	public void createWillThrowWhenAlreadyIsPandingEmail() {
+		when(this.userDAO.existsById(this.userEntity.getId()))
+			.thenReturn(true);
+		when(this.pendingEmailDAO.findPendingEmail(this.userEntity))
+			.thenReturn(Optional.of(this.pendingEmailEntity));
+		
+		assertThatThrownBy(() -> this.underTest.create(this.userEntity, this.pendingEmail))
+			.isInstanceOf(PendingEmailAlreadyExistsException.class)
+			.hasMessage("There is already a pending email");
 	}
 	
 }

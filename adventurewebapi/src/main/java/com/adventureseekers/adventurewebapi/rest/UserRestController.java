@@ -1,5 +1,6 @@
 package com.adventureseekers.adventurewebapi.rest;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
@@ -33,6 +35,7 @@ import com.adventureseekers.adventurewebapi.helpers.EmailHelper;
 import com.adventureseekers.adventurewebapi.model.assembler.UserDetailModelAssembler;
 import com.adventureseekers.adventurewebapi.model.assembler.UserModelAssembler;
 import com.adventureseekers.adventurewebapi.response.StringResponse;
+import com.adventureseekers.adventurewebapi.service.PendingEmailService;
 import com.adventureseekers.adventurewebapi.service.UserDetailService;
 import com.adventureseekers.adventurewebapi.service.UserService;
 
@@ -47,6 +50,9 @@ public class UserRestController {
 	
 	@Autowired
 	private UserDetailService userDetailService;
+	
+	@Autowired
+	private PendingEmailService pendingEmailService;
 	
 	@Autowired
 	private EmailHelper emailHelper;
@@ -84,7 +90,12 @@ public class UserRestController {
 		UserDetailEntity userDetailEntity = this.userDetailService.getByUsername(username);
 		return ResponseEntity.ok(this.userDetailModelAssembler.toModel(userDetailEntity));
 	}
-	
+
+	/*@GetMapping("/details/profileImage/{username}")
+	public ResponseEntity<?> getProfileImage(@PathVariable String username) {
+
+	}*/
+
 	@DeleteMapping("/{username}")
 	public ResponseEntity<StringResponse> deleteUserByUsername(
 			@PathVariable("username") String username) {
@@ -111,7 +122,7 @@ public class UserRestController {
 		if (StringUtils.hasLength(newUser.getUserName())) {
 			// validation
 			if (bindingResult.hasFieldErrors("userName")) {
-				actualErrors.addError(bindingResult.getFieldError("userName"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("userName")));
 			}
 			else {
 				if (!Objects.equals(theUser.getUserName(), newUser.getUserName())) {
@@ -123,39 +134,17 @@ public class UserRestController {
 		
 		if (StringUtils.hasLength(newUser.getEmail())) {
 			if (bindingResult.hasFieldErrors("email")) {
-				actualErrors.addError(bindingResult.getFieldError("email"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("email")));
 			}
 			else {
-				/*if (!Objects.equals(theUser.getEmail(), newUser.getEmail())) {
-					// change only the pending email
-					// the user needs to confirm the email in order to have it changed permanently
-					theUser.setPendingEmail(newUser.getEmail());
-					
-					// create email confirmation token
-					// create and save a confirmation token
-			        String token = UUID.randomUUID().toString();
-			        
-			        ConfirmationTokenEntity confirmationToken = new ConfirmationTokenEntity(
-				        		token,
-				        		LocalDateTime.now(),
-				        		LocalDateTime.now().plusDays(7),
-				        		theUser
-			        		);
-			        
-			        // save the token
-			        this.confirmationTokenService.saveConfirmationToken(confirmationToken);
-			        
-			        // send an email to the user with the confirmation link
-			        this.emailHelper.sendVerificationEmail(theUser, token);
-					
-					needUpdate = true;
-				}*/
+				// create a pending email for confirmation
+				this.pendingEmailService.create(theUser, newUser.getEmail());
 			}
 		}
 		
 		if (StringUtils.hasLength(newUser.getFirstName())) {
 			if (bindingResult.hasFieldErrors("firstName")) {
-				actualErrors.addError(bindingResult.getFieldError("firstName"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("firstName")));
 			}
 			else {
 				if (!Objects.equals(theUser.getFirstName(), newUser.getFirstName())) {
@@ -167,7 +156,7 @@ public class UserRestController {
 		
 		if (StringUtils.hasLength(newUser.getLastName())) {
 			if (bindingResult.hasFieldErrors("lastName")) {
-				actualErrors.addError(bindingResult.getFieldError("lastName"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("lastName")));
 			}
 			else {
 				if (!Objects.equals(theUser.getLastName(), newUser.getLastName())) {
@@ -179,7 +168,7 @@ public class UserRestController {
 		
 		if (newUser.getBirthDate() != null) {
 			if (bindingResult.hasFieldErrors("birthDate")) {
-				actualErrors.addError(bindingResult.getFieldError("birthDate"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("birthDate")));
 			}
 			else {
 				if (!Objects.equals(theUser.getBirthDate(), newUser.getBirthDate())) {
@@ -221,7 +210,7 @@ public class UserRestController {
 		if (StringUtils.hasLength(newUserDetail.getDescription())) {
 			// validation
 			if (bindingResult.hasFieldErrors("description")) {
-				actualErrors.addError(bindingResult.getFieldError("description"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("description")));
 			}
 			else {
 				if (!Objects.equals(theUserDetail.getDescription(), newUserDetail.getDescription())) {
@@ -234,7 +223,7 @@ public class UserRestController {
 		if (StringUtils.hasLength(newUserDetail.getCity())) {
 			// validation
 			if (bindingResult.hasFieldErrors("city")) {
-				actualErrors.addError(bindingResult.getFieldError("city"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("city")));
 			}
 			else {
 				if (!Objects.equals(theUserDetail.getCity(), newUserDetail.getCity())) {
@@ -247,7 +236,7 @@ public class UserRestController {
 		if (StringUtils.hasLength(newUserDetail.getCountry())) {
 			// validation
 			if (bindingResult.hasFieldErrors("country")) {
-				actualErrors.addError(bindingResult.getFieldError("country"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("country")));
 			}
 			else {
 				if (!Objects.equals(theUserDetail.getCountry(), newUserDetail.getCountry())) {
@@ -260,7 +249,7 @@ public class UserRestController {
 		if (StringUtils.hasLength(newUserDetail.getCounty())) {
 			// validation
 			if (bindingResult.hasFieldErrors("city")) {
-				actualErrors.addError(bindingResult.getFieldError("city"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("city")));
 			}
 			else {
 				if (!Objects.equals(theUserDetail.getCounty(), newUserDetail.getCounty())) {
@@ -273,7 +262,7 @@ public class UserRestController {
 		if (newUserDetail.getProfileImage() != null) {
 			// validation
 			if (bindingResult.hasFieldErrors("profileImage")) {
-				actualErrors.addError(bindingResult.getFieldError("profileImage"));
+				actualErrors.addError(Objects.requireNonNull(bindingResult.getFieldError("profileImage")));
 			}
 			else {
 				theUserDetail.setProfileImage(newUserDetail.getProfileImage());
